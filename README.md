@@ -54,7 +54,7 @@ git clone git@github.com:RenzKa/simlingo.git
 cd simlingo
 chmod +x setup_carla.sh
 ./setup_carla.sh
-conda env create -f environment.yml
+conda env create -f environment.yaml
 conda activate simlingo
 ```
 
