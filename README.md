@@ -2,7 +2,7 @@
 
 <p align="center">
   <h3 align="center">
-    <a href="https://arxiv.org/abs/2503.09594"> Paper</a> | <a href="https://www.youtube.com/watch?v=Mpbnz2AKaNA&t=15s">Video</a> | <a href="https://www.katrinrenz.de/simlingo/">Website</a>
+    <a href="https://arxiv.org/abs/2503.09594"> Paper</a> | <a href="https://www.youtube.com/watch?v=Mpbnz2AKaNA&t=15s">Video</a> | <a href="https://www.katrinrenz.de/simlingo/">Website</a> | <a href="https://huggingface.co/datasets/RenzKa/simlingo">Dataset</a> |
   </h3>
 </p>
 
@@ -27,13 +27,14 @@ This repository is based on [Carla Garage](https://github.com/autonomousvision/c
 
 
 ## News <a name="news"></a>
+- **`[2025/05/26]`** We released the full dataset on huggingface.
 - **`[2025/05/08]`** Initial code release.
 - **`[2025/04/28]`** SimLingo is accepted to CVPR as a highlight paper.
 
 
 ## Contents
 1. [Setup](#setup)
-2. [Dataset download (Coming Soon)](#dataset-download)
+2. [Dataset download](#dataset-download)
 3. [Data Generation](#data-generation)
     - [Driving Data](#driving-data)
     - [Language Data](#language-data)
@@ -69,7 +70,38 @@ export PYTHONPATH="${CARLA_ROOT}/PythonAPI/carla/":"${SCENARIO_RUNNER_ROOT}":"${
 ```
 
 ## Dataset download
-We will release our dataset with the Driving, VQA, Commentary and Dreamer labels soon.
+You can find our dataset here: https://huggingface.co/datasets/RenzKa/simlingo
+### Download the whole dataset using git with Git LFS
+
+```bash
+# Clone the repository
+git clone https://huggingface.co/datasets/RenzKa/simlingo
+
+# Navigate to the directory
+cd simlingo
+
+# Pull the LFS files
+git lfs pull
+```
+
+### Download a single file with wget
+
+```bash
+# Download individual files (replace with actual file URLs from Hugging Face)
+wget https://huggingface.co/datasets/RenzKa/simlingo/resolve/main/[filename].tar.gz
+```
+
+### Extract to a single directory - please specify the location where you want to store the dataset
+```bash
+# Create output directory
+mkdir -p database/simlingo
+
+# Extract all archives to the same directory
+for file in *.tar.gz; do
+    echo "Extracting $file to database/simlingo/..."
+    tar -xzf "$file" -C database/simlingo/
+done
+```
 
 ## Dataset generation
 ### Driving Data
