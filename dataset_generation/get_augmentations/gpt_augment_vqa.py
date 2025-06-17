@@ -88,7 +88,7 @@ if __name__ == "__main__":
     save_path = f'data/{dataset}_augmented'
     Path(save_path).mkdir(parents=True, exist_ok=True)
 
-    path_to_graph = 'database/simlingo_v2_2025_01_10/drivelm/simlingo'
+    path_to_graph = 'database/simlingo/drivelm/simlingo'
     
     # read all jsons
     all_files = glob.glob(f'{path_to_graph}/**/*.json.gz', recursive=True)

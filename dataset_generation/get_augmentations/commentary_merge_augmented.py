@@ -15,7 +15,7 @@ from tqdm import tqdm
 
 
 save_path = 'data/augmented_templates'
-path = 'database/simlingo_v2_2025_01_10/commentary'
+path = 'database/simlingo/commentary'
 augmented_sub_sentence_file = 'data/augmented_templates/commentary_subsentence.json'
 all_files = glob.glob(path + '/**/*.json.gz', recursive=True)
 

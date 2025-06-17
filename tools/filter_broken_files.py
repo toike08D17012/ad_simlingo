@@ -4,7 +4,7 @@ import gzip
 import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-path = 'database/simlingo_v2_2025_01_10/dreamer'
+path = 'database/simlingo/dreamer'
 file_ending = '.json.gz'
 
 # Load all files in the directory

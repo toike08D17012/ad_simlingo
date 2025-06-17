@@ -1,6 +1,6 @@
 import json
 
-file = 'database/bucketsv2_simlingo_v2_2025_01_10/buckets_stats.json'
+file = 'database/bucketsv2_simlingo/buckets_stats.json'
 
 with open(file, 'r') as f:
     data = json.load(f)

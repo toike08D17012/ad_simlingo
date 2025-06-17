@@ -148,7 +148,7 @@ class COMsGenerator():
 
         path_measurements = path.replace('boxes', 'measurements')
         if 'lb1_split' in path_measurements:
-            # database/simlingo_v2_2025_01_10/data/simlingo/lb1_split/routes_training/ControlLoss/Town01_Rep0_Town01_Scenario1_0_route0_01_11_14_15_07/measurements/0000.json.gz
+            # database/simlingo/data/simlingo/lb1_split/routes_training/ControlLoss/Town01_Rep0_Town01_Scenario1_0_route0_01_11_14_15_07/measurements/0000.json.gz
             scenario_name = path_measurements.split('lb1_split/')[-1].split('/')[1]
             if scenario_name == 'noScenarios':
                 scenario_name = None

@@ -16,8 +16,8 @@ model:
     downsample_feature_grid_factor: 2
 
 data_module:
-  data_path: database/simlingo_v2_2025_01_10
-  bucket_path: database/bucketsv2_simlingo_v2_2025_01_10
+  data_path: database/simlingo
+  bucket_path: database/bucketsv2_simlingo
   batch_size: 28
   num_workers: 10
   route_as: target_point

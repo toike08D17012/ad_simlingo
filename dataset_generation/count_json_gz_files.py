@@ -3,9 +3,9 @@ import gzip
 import glob
 
 paths = [
-    'database/simlingo_v2_2025_01_10/commentary',
-    'database/simlingo_v2_2025_01_10/dreamer',
-    'database/simlingo_v2_2025_01_10/drivelm',
+    'database/simlingo/commentary',
+    'database/simlingo/dreamer',
+    'database/simlingo/drivelm',
 ]
 
 

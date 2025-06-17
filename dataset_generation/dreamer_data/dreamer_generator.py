@@ -48,7 +48,7 @@ class CarlaAlternativeCreator():
  
     # Dataset and path settings
     base_folder = 'database'
-    dataset_name = 'simlingo_v2_2025_01_10'
+    dataset_name = 'simlingo'
     data_directory = f'{base_folder}/{dataset_name}/data'
     viz_save_path = 'viz/dreamer' if not viz_for_video else 'viz/dreamer_video'
     Path(viz_save_path).mkdir(parents=True, exist_ok=True)
