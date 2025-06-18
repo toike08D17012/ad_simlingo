@@ -2,7 +2,7 @@
 
 <p align="center">
   <h3 align="center">
-    <a href="https://arxiv.org/abs/2503.09594"> Paper</a> | <a href="https://www.youtube.com/watch?v=Mpbnz2AKaNA&t=15s">Video</a> | <a href="https://www.katrinrenz.de/simlingo/">Website</a> | <a href="https://huggingface.co/datasets/RenzKa/simlingo">Dataset</a> |
+    <a href="https://arxiv.org/abs/2503.09594"> Paper</a> | <a href="https://www.youtube.com/watch?v=Mpbnz2AKaNA&t=15s">Video</a> | <a href="https://www.katrinrenz.de/simlingo/">Website</a> | <a href="https://huggingface.co/datasets/RenzKa/simlingo">Dataset</a>
   </h3>
 </p>
 
@@ -71,6 +71,7 @@ export PYTHONPATH="${CARLA_ROOT}/PythonAPI/carla/":"${SCENARIO_RUNNER_ROOT}":"${
 
 ## Dataset download
 You can find our dataset here: https://huggingface.co/datasets/RenzKa/simlingo
+The uploaded data contains the driving dataset, VQA, Commentary, and Dreamer labels.
 ### Download the whole dataset using git with Git LFS
 
 ```bash
@@ -104,75 +105,77 @@ done
 ```
 
 ## Dataset generation
+If you download our dataset from Huggingface, you don't need to follow any of the steps from this section.
+
 ### Driving Data
 
-This repository uses the open source expert PDM-Lite from the paper [DriveLM](https://arxiv.org/abs/2312.14150) to generate the driving dataset. Most of the code for the data collection is taken from [Carla Garage](https://github.com/autonomousvision/carla_garage). However we changed some hyperparameter and used the data_agent from DriveLM which saves the required auxiliary information during data collection which is needed to generate the VQA and commentary data.
+This repository uses the open-source expert PDM-Lite from the paper [DriveLM](https://arxiv.org/abs/2312.14150) to generate the driving dataset. Most of the code for the data collection is taken from [Carla Garage](https://github.com/autonomousvision/carla_garage). However, we changed some hyperparameter and used the data_agent from DriveLM which saves the required auxiliary information during data collection which is needed to generate the VQA and commentary data.
 
-**Generate driving data:** To re-generate the data we provide a script for a SLURM cluster which parallelizes data collection across many GPUs (2080ti in our case). First, adjust the paths etc. in lines 213-230 of [collect_dataset_slurm.py](collect_dataset_slurm.py). You can specify the SLURM partition in [partition.txt](partition.txt) and change it during runtime. [max_num_jobs.txt](max_num_jobs.txt) specifies how many parallel SLURM jobs are submitted. This also can be changed during runtime. The data collection is started via `sbatch 0_run_collect_dataset_slurm.sh`, which calls `collect_dataset_slurm.py`. 
+**Generate driving data:** To re-generate the data, we provide a script for a SLURM cluster, which parallelizes data collection across many GPUs (2080ti in our case). First, adjust the paths etc. in lines 213-230 of [collect_dataset_slurm.py](collect_dataset_slurm.py). You can specify the SLURM partition in [partition.txt](partition.txt) and change it during runtime. [max_num_jobs.txt](max_num_jobs.txt) specifies how many parallel SLURM jobs are submitted. This can also be changed during runtime. The data collection is started via `sbatch 0_run_collect_dataset_slurm.sh`, which calls `collect_dataset_slurm.py`. 
 Increase the number in [max_num_jobs.txt](max_num_jobs.txt) once your setup works. 
 
 **Dataset cleaning:** After the dataset is collected you can use `dataset_generation/delete_failed_runs.py` and `dataset_generation/delete_infraction_routes.py` to delete routes where the expert failed or carla crashed and the routes had to be restarted.
 
-**Route files:** The routes for data collection are stored in [data/simlingo](data/simlingo/). **Note:** these are different route files as used in the Carla Garage. To generate our route files you can use the following script that generate our modified route files from the original carla route files: `bash dataset_generation/split_route_files.sh`
+**Route files:** The routes for data collection are stored in [data/simlingo](data/simlingo/). **Note:** These are different route files as used in the Carla Garage. To generate our route files, you can use the following script that generates our modified route files from the original Carla route files: `bash dataset_generation/split_route_files.sh`
 This splits the long training and validation route files provided by Carla into short routes with max 1 or 3 scenarios and balances and upsamples the scenarios.
 
 PDM-Lite uses a modified version of the CARLA leaderboard that exposes additional information about the scenarios and makes data collection easier. They can be found in the [leaderboard_autopilot](leaderboard_autopilot) and [scenario_runner_autopilot](scenario_runner_autopilot) folders.
 
-The dataset provided in this repository is not perfect. At some point while improving the model you will likely need to collect an improved version.
+The dataset provided in this repository is not perfect. At some point while improving the model, you will likely need to collect an improved version.
 
 ### Data buckets
-Our bucketfile will be included in the released dataset. Coming soon.
+Our bucket file is included in the released dataset. Check out our Huggingface repo.
 If you want to generate your own buckets you can use the script `dataset_generation/data_buckets/carla_get_buckets.py`.
 
 ### Language Data
-**VQA (DriveLM):** We use the script (with minor modifications) from [DriveLM](https://github.com/OpenDriveLab/DriveLM/tree/DriveLM-CARLA) to generate VQA labels. You can run `dataset_generation/language_labels/drivelm/carla_vqa_generator_main.py` to generate the VQA labels for your dataset. We used ChatGPT to augment the questions and answers. We provide the augmented templates, which we load during training in the folder [data/augmented_templates/drivelm_train_augmented_v2](data/augmented_templates/drivelm_train_augmented_v2). An example script to generate those augmented sentences can be found here: [dataset_generation/get_augmentations/gpt_augment_vqa.py](dataset_generation/get_augmentations/gpt_augment_vqa.py). **Note:** To be able to generate the VQA labels we save many auxiliary information of the simulator state during data collection. If you use a different dataset it is likely that this labelling script does not work.
+**VQA (DriveLM):** We use the script (with minor modifications) from [DriveLM](https://github.com/OpenDriveLab/DriveLM/tree/DriveLM-CARLA) to generate VQA labels. You can run `dataset_generation/language_labels/drivelm/carla_vqa_generator_main.py` to generate the VQA labels for your dataset. We used ChatGPT to augment the questions and answers. We provide the augmented templates, which we load during training in the folder [data/augmented_templates/drivelm_train_augmented_v2](data/augmented_templates/drivelm_train_augmented_v2). An example script to generate those augmented sentences can be found here: [dataset_generation/get_augmentations/gpt_augment_vqa.py](dataset_generation/get_augmentations/gpt_augment_vqa.py). **Note:** To be able to generate the VQA labels we save many auxiliary information of the simulator state during data collection. If you use a different dataset, it is likely that this labelling script does not work.
 
-**Commentary:** In this work we provide a new script to generate commentary labels. To generate commentary labels for your dataset, run `dataset_generation/language_labels/commentary/carla_commentary_generator_main.py`. We used ChatGPT to augment the questions and answers. We provide the augmented templates, which we load during training in the folder [data/augmented_templates/commentary_augmented.json](data/augmented_templates/commentary_augmented.json). Unfortunetly, based on how the project evolved the augmentations were first done manually for subsentences and later merged. If helpful we provide the subsentence level augmentationes [here](data/augmented_templates/commentary_subsentence.json) and the script to merge those to the final ones [here](dataset_generation/get_augmentations/commentary_merge_augmented.py). **Note:** To be able to generate the commentary labels we save many auxiliary information of the simulator state during data collection. If you use a different dataset it is likely that this labelling script does not work.
+**Commentary:** In this work we provide a new script to generate commentary labels. To generate commentary labels for your dataset, run `dataset_generation/language_labels/commentary/carla_commentary_generator_main.py`. We used ChatGPT to augment the questions and answers. We provide the augmented templates, which we load during training in the folder [data/augmented_templates/commentary_augmented.json](data/augmented_templates/commentary_augmented.json). Unfortunately, based on how the project evolved the augmentations were first done manually for subsentences and later merged. If helpful, we provide the subsentence level augmentationes [here](data/augmented_templates/commentary_subsentence.json) and the script to merge those to the final ones [here](dataset_generation/get_augmentations/commentary_merge_augmented.py). **Note:** To be able to generate the commentary labels, we save auxiliary information of the simulator state during data collection. If you use a different dataset, it is likely that this labelling script does not work.
 
 _File structure:_
 ``` bash
-"image": # Path to rgb image
+"image": # Path to RGB image
 "commentary": # Commentary string (not augmented)
-"commentary_template": # Commentary with placeholders for changing parts (e.g. object description, location). This is used to retrieve the augmentations.
-"cause_object_visible_in_image": # Whether the object that causes the expert actions is visible in the front view image. Could be used to filter samples where the commentary describes an action based on a object not visible.
+"commentary_template": # Commentary with placeholders for changing parts (e.g., object description, location). This is used to retrieve the augmentations.
+"cause_object_visible_in_image": # Whether the object that causes the expert actions is visible in the front view image. Could be used to filter samples where the commentary describes an action based on an object not visible.
 "cause_object": # Dictionary with attributes of the object causing the expert action.
-"cause_object_string": # Language description of the cause object (e.g. dark green car that is to the front)
+"cause_object_string": # Language description of the cause object (e.g., dark green car that is to the front)
 "scenario_name": # Name of the active CARLA scenario
 "placeholder": # Dictionary to be able to replace the placeholders in commentary_template.
 ```
 
 ### Dreamer Data
-To improve the alignment of language and actions we propose _Action Dreaming_ for which we provide a dataset with multiple different future trajectories given a language instruction. The language instructions cover a wide range of modes (e.g., speed changes, lane changes, object-centric navigation, crashes) with a label whether the execution is allowed and safe or not. 
-To generate the labels run `dataset_generation/dreamer_data/dreamer_generator.py`.
+To improve the alignment of language and actions, we propose _Action Dreaming_ for which we provide a dataset with multiple different future trajectories given a language instruction. The language instructions cover a wide range of modes (e.g., speed changes, lane changes, object-centric navigation, crashes) with a label indicating whether the execution is allowed and safe or not. 
+To generate the labels, run `dataset_generation/dreamer_data/dreamer_generator.py`.
 
 _File structure:_
 ``` bash
 category: # e.g. "target_speed", "stop", "faster", "crash", ...
       "waypoints": # Dreaming waypoints
       "route": # Dreaming path
-      "rgb_path": # Path to rgb image in dataset
+      "rgb_path": # Path to RGB image in dataset
       "allowed": # Flag if execution is allowed.
       "mode": # category
-      "info": # more information, e.g. about current, target and final speed
+      "info": # more information, e.g., about current, target, and final speed
       "route_reasoning": # Language description about the route.
       "dreamer_instruction": # Language instruction.
-      "instructions_templates": # Instruction with placeholders for changing parts (e.g. object description, location). This is used to retrieve the augmentations.
+      "instructions_templates": # Instruction with placeholders for changing parts (e.g., object description, location). This is used to retrieve the augmentations.
       "templates_placeholders": # Dictionary to be able to replace the placeholders in commentary_template.
       "dreamer_answer_safety": # Answer when safety mode is activated.
       "safe_to_execute": # Flag if the instruction is safe to execute.
 ```
 
 ## Training
-We provide code for the smaller model SimLingo-Base (without language capabilities) in the folder `simlingo_base_training` and for the full model SimLingo in `simlingo_training`. For the config managment we use hydra. The config parameters are defined in the `config.py` file and can be adjusted in the `.yaml` files inside the `config` folder. 
+We provide code for the smaller model SimLingo-Base (without language capabilities) in the folder `simlingo_base_training` and for the full model SimLingo in `simlingo_training`. For the config managment we use hydra. The config parameters are defined in the `config.py` file and can be adjusted in the `.yaml` files inside the `config` folder. **Note:** You should double check if the paths to the dataset is correct.
 
 We provide a SLURM script to start training: [train_simlingo_seed1.sh](train_simlingo_seed1.sh). This can be easily converted to a bash script to locally start the training. The entry file for training is [simlingo_training/train.py](simlingo_training/train.py).
 
-With the default config the training logs in Wandb. Login is required. We also include a visualization callback that plots ground truth and predicted waypoints during training.
+With the default config, the training logs to Wandb. Login is required. We also include a visualization callback that plots ground truth and predicted waypoints during training.
 
 
 ## Evaluation
 
-Agent files for closed loop eval are coming soon.
+Agent files for closed-loop eval are coming soon.
 
 ### Bench2Drive
 Bench2Drive is a CARLA benchmark proposed by the paper [Bench2Drive: Towards Multi-Ability Benchmarking of Closed-Loop End-To-End Autonomous Driving](https://arxiv.org/abs/2406.03877). It consists of 220 very short (~150m) routes split across all towns with 1 safety critical scenario in each route.
