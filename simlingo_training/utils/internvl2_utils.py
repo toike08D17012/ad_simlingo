@@ -61,9 +61,10 @@ def get_chat_tokens(tokenizer, prompts: List[str], user_start_token_str: str, as
     assistant_start_token_ids = torch.tensor(tokenizer(assistant_start_token_str)["input_ids"])
 
     seq_len_to_find = user_start_token_ids.shape[0]
+    seq_len_to_find_assistant = assistant_start_token_ids.shape[0]
     # Create a mask by sliding the sequence across the original tensor
     matches_user = (prompt_tokenized_ids.unfold(1, seq_len_to_find, 1) == user_start_token_ids).all(dim=2)
-    matches_assistant = (prompt_tokenized_ids.unfold(1, seq_len_to_find, 1) == assistant_start_token_ids).all(dim=2)
+    matches_assistant = (prompt_tokenized_ids.unfold(1, seq_len_to_find_assistant, 1) == assistant_start_token_ids).all(dim=2)
     # Get all matches
     match_indices_user = torch.nonzero(matches_user, as_tuple=True)
     match_indices_assistant = torch.nonzero(matches_assistant, as_tuple=True)
