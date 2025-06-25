@@ -18,8 +18,8 @@ def check_json_file(json_file):
 
 
 def main():
-    path = '/mnt/lustre/work/geiger/krenz73/coding/07_simlingo/simlingo_cleanup/database/simlingo/commentary'
-    path = '/mnt/lustre/work/geiger/krenz73/coding/07_simlingo/simlingo_cleanup/database/simlingo/dreamer'
+    path = 'database/simlingo/commentary'
+    path = 'database/simlingo/dreamer'
     all_jsons = glob.glob(f'{path}/**/*.json.gz', recursive=True)
 
     print(f'Found {len(all_jsons)} json files')

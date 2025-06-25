@@ -4,7 +4,7 @@ import shutil
 import pathlib
 
 
-dataset_path = '/home/geiger/krenz73/coding/07_simlingo/simlingo_cleanup/database/simlingo/data'
+dataset_path = 'database/simlingo/data'
 all_data_folders = glob.glob(f'{dataset_path}/**/Town*', recursive=True)
 delete = False
 

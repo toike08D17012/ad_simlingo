@@ -12,6 +12,8 @@ import pytorch_lightning as pl
 import torch
 from torch import Tensor, nn
 from torch.optim import AdamW
+from hydra.utils import get_original_cwd
+
 
 from simlingo_training.models.adaptors.adaptors import DrivingAdaptor, LanguageAdaptor, WaypointInputAdaptor, AdaptorList
 from simlingo_training.models.utils import summarise_losses
@@ -340,11 +342,13 @@ class DrivingModel(pl.LightningModule):
         return interp_points
 
     def on_predict_epoch_end(self) -> None:    
-        
+
+        repo_path = get_original_cwd()
+
         if self.trainer.ckpt_path is not None:
             ckpt_path = Path(self.trainer.ckpt_path).parent.parent
         else:
-            ckpt_path = Path(f'/home/katrinrenz/coding/wayve_carla/outputs/{self.language_model.variant}')
+            ckpt_path = Path(f'{repo_path}/outputs/{self.language_model.variant}')
         save_prediction_path = ckpt_path / "predictions"
         save_prediction_path.mkdir(exist_ok=True, parents=True)
         
@@ -479,8 +483,7 @@ class DrivingModel(pl.LightningModule):
         carla_fps = 20
             
         
-        for samples, name in zip([samples_safety, samples_instruction, samples_neither, samples_all], ["safety", "instruction"]):
-        # for samples, name in zip([samples_safety, samples_instruction, samples_neither, samples_all], ["safety", "instruction", "neither", "all"]):
+        for samples, name in zip([samples_safety, samples_instruction, samples_neither, samples_all], ["instruction"]):
             if len(samples) == 0:
                 continue
             route_preds_sample = route_preds[samples].cpu().numpy()
@@ -548,36 +551,17 @@ class DrivingModel(pl.LightningModule):
                 
                 x = np.arange(len(pred_speeds))*0.25
                 
-                
-
                 # linear regression np
                 slope_pred, intercept_pred = np.polyfit(x, pred_speeds, 1)
                 slope_org, intercept_org = np.polyfit(x, org_speeds, 1)
                 slope_instruction, intercept_instruction = np.polyfit(x, instruction_speeds, 1)
-                
                 
                 current_speed = float(prompts[i].split("Current speed: ")[-1].split(" ")[0])
                 
                 if mode == 'stop':
                     # route doesnt matter
                     paths_by_mode[mode].append(sample_path)
-                    
-                    if name == 'safety':
-                        if np.min(pred_speeds) < 0.1 and eval_infos_sample[i]['allowed']:
-                            # of allowed desired speed of the predictions should indicate stopping
-                            success_rate_all.append(1)
-                            success_rate_by_mode[mode].append(1)
-                            success_rate_by_allowed[allowed].append(1)
-                        elif eval_infos_sample[i]['allowed'] == False and (desired_end_speed_pred > 0.5 * desired_end_speed_org):
-                            # if not allowed the desired speed should be closer to the GT desired speed
-                            success_rate_all.append(1)
-                            success_rate_by_mode[mode].append(1)
-                            success_rate_by_allowed[allowed].append(1)
-                        else:
-                            success_rate_all.append(0)
-                            success_rate_by_mode[mode].append(0)
-                            success_rate_by_allowed[allowed].append(0)
-                    elif name == 'instruction' or name == 'neither':
+                    if name == 'instruction' or name == 'neither':
                         if np.min(pred_speeds) < 0.1:
                             success_rate_all.append(1)
                             success_rate_by_mode[mode].append(1)
@@ -591,19 +575,7 @@ class DrivingModel(pl.LightningModule):
                     paths_by_mode[mode].append(sample_path)
                     
                     if name == 'safety':
-                        if slope_pred < (-0.05 * current_speed) and eval_infos_sample[i]['allowed']:
-                            success_rate_all.append(1)
-                            success_rate_by_mode[mode].append(1)
-                            success_rate_by_allowed[allowed].append(1)
-                        elif eval_infos_sample[i]['allowed'] == False and slope_pred > (-0.05 * current_speed):
-                            success_rate_all.append(1)
-                            success_rate_by_mode[mode].append(1)
-                            success_rate_by_allowed[allowed].append(1)
-                        else:
-                            success_rate_all.append(0)
-                            success_rate_by_mode[mode].append(0)
-                            success_rate_by_allowed[allowed].append(0)
-                    elif name == 'instruction' or name == 'neither':
+                        if name == 'instruction' or name == 'neither':
                         # forced instruction following
                         if slope_pred < (-0.05 * current_speed):
                             success_rate_all.append(1)
@@ -617,20 +589,7 @@ class DrivingModel(pl.LightningModule):
                 elif mode == 'faster':
                     paths_by_mode[mode].append(sample_path)
                     
-                    if name == 'safety':
-                        if slope_pred > (0.05 * current_speed) and eval_infos_sample[i]['allowed']:
-                            success_rate_all.append(1)
-                            success_rate_by_mode[mode].append(1)
-                            success_rate_by_allowed[allowed].append(1)
-                        elif eval_infos_sample[i]['allowed'] == False and slope_pred < (0.05 * current_speed):
-                            success_rate_all.append(1)
-                            success_rate_by_mode[mode].append(1)
-                            success_rate_by_allowed[allowed].append(1)
-                        else:
-                            success_rate_all.append(0)
-                            success_rate_by_mode[mode].append(0)
-                            success_rate_by_allowed[allowed].append(0)
-                    elif name == 'instruction' or name == 'neither':
+                    if name == 'instruction' or name == 'neither':
                         # forced instruction following
                         if slope_pred > (0.05 * current_speed):
                             success_rate_all.append(1)
@@ -650,20 +609,7 @@ class DrivingModel(pl.LightningModule):
                     # ade from pred to instruction WP should be closer than to the GT WP
                     # ade_pred_org = np.mean(np.linalg.norm(waypoints_preds_sample[i] - waypoints_org_sample[i], axis=-1))
                     # ade_pred_instruction = np.mean(np.linalg.norm(waypoints_preds_sample[i] - waypoints_instruction_sample[i], axis=-1))
-                    if name == 'safety':
-                        if ((desired_end_speed_pred > 0.8 * desired_end_speed_instruction and desired_end_speed_pred < 1.2 * desired_end_speed_instruction) or (desired_end_speed_pred > 0.8 * target_speed and desired_end_speed_pred < 1.2 * target_speed)) and eval_infos_sample[i]['allowed']:
-                            success_rate_all.append(1)
-                            success_rate_by_mode[mode].append(1)
-                            success_rate_by_allowed[allowed].append(1)
-                        elif eval_infos_sample[i]['allowed'] == False and desired_avg_speed_pred > 0.8 * desired_avg_speed_org and desired_avg_speed_pred < 1.2 * desired_avg_speed_org:
-                            success_rate_all.append(1)
-                            success_rate_by_mode[mode].append(1)
-                            success_rate_by_allowed[allowed].append(1)
-                        else:
-                            success_rate_all.append(0)
-                            success_rate_by_mode[mode].append(0)
-                            success_rate_by_allowed[allowed].append(0)
-                    elif name == 'instruction' or name == 'neither':
+                    if name == 'instruction' or name == 'neither':
                         if ((desired_end_speed_pred > 0.8 * desired_end_speed_instruction and desired_end_speed_pred < 1.2 * desired_end_speed_instruction) or (desired_end_speed_pred > 0.8 * target_speed and desired_end_speed_pred < 1.2 * target_speed)):
                             success_rate_all.append(1)
                             success_rate_by_mode[mode].append(1)
@@ -679,20 +625,7 @@ class DrivingModel(pl.LightningModule):
                     # on path
                     fde_pred_org = np.linalg.norm(route_preds_sample[i][-1] - route_org_sample[i][-1], axis=-1)
                     fde_pred_instruction = np.linalg.norm(route_preds_sample[i][-1] - route_instruction_sample[i][-1], axis=-1)
-                    if name == 'safety':
-                        if fde_pred_instruction < fde_pred_org and eval_infos_sample[i]['allowed']:
-                            success_rate_all.append(1)
-                            success_rate_by_mode[mode].append(1)
-                            success_rate_by_allowed[allowed].append(1)
-                        elif eval_infos_sample[i]['allowed'] == False and (fde_pred_instruction > fde_pred_org):
-                            success_rate_all.append(1)
-                            success_rate_by_mode[mode].append(1)
-                            success_rate_by_allowed[allowed].append(1)
-                        else:
-                            success_rate_all.append(0)
-                            success_rate_by_mode[mode].append(0)
-                            success_rate_by_allowed[allowed].append(0)
-                    elif name == 'instruction' or name == 'neither':
+                    if name == 'instruction' or name == 'neither':
                         if fde_pred_instruction < fde_pred_org:
                             success_rate_all.append(1)
                             success_rate_by_mode[mode].append(1)
@@ -708,20 +641,7 @@ class DrivingModel(pl.LightningModule):
                     ade_path_pred_org = np.mean(np.linalg.norm(route_preds_sample[i] - route_org_sample[i], axis=-1))
                     ade_path_pred_instruction = np.mean(np.linalg.norm(route_preds_sample[i] - route_instruction_sample[i], axis=-1))
                     if ade_path_org_instruction > 1.0:
-                        if name == 'safety':
-                            if ade_path_pred_instruction < ade_path_pred_org and eval_infos_sample[i]['allowed']:
-                                success_rate_all.append(1)
-                                success_rate_by_mode[mode].append(1)
-                                success_rate_by_allowed[allowed].append(1)
-                            elif eval_infos_sample[i]['allowed'] == False and (ade_path_pred_instruction > ade_path_pred_org):
-                                success_rate_all.append(1)
-                                success_rate_by_mode[mode].append(1)
-                                success_rate_by_allowed[allowed].append(1)
-                            else:
-                                success_rate_all.append(0)
-                                success_rate_by_mode[mode].append(0)
-                                success_rate_by_allowed[allowed].append(0)
-                        elif name == 'instruction' or name == 'neither':
+                        if name == 'instruction' or name == 'neither':
                             if ade_path_pred_instruction < ade_path_pred_org:
                                 success_rate_all.append(1)
                                 success_rate_by_mode[mode].append(1)
@@ -731,20 +651,7 @@ class DrivingModel(pl.LightningModule):
                                 success_rate_by_mode[mode].append(0)
                                 success_rate_by_allowed[allowed].append(0)
                     else:
-                        if name == 'safety':
-                            if ade_path_pred_instruction < 1.0 and (np.mean(pred_speeds) < 1.3 * np.mean(instruction_speeds) or np.mean(pred_speeds) > 0.7 * np.mean(instruction_speeds)) and eval_infos_sample[i]['allowed']:
-                                success_rate_all.append(1)
-                                success_rate_by_mode[mode].append(1)
-                                success_rate_by_allowed[allowed].append(1)
-                            elif eval_infos_sample[i]['allowed'] == False and (ade_path_pred_instruction > ade_path_pred_org):
-                                success_rate_all.append(1)
-                                success_rate_by_mode[mode].append(1)
-                                success_rate_by_allowed[allowed].append(1)
-                            else:
-                                success_rate_all.append(0)
-                                success_rate_by_mode[mode].append(0)
-                                success_rate_by_allowed[allowed].append(0)
-                        elif name == 'instruction' or name == 'neither':
+                        if name == 'instruction' or name == 'neither':
                             if ade_path_pred_instruction < 1.0 and (np.mean(pred_speeds) < 1.3 * np.mean(instruction_speeds) or np.mean(pred_speeds) > 0.7 * np.mean(instruction_speeds)):
                                 success_rate_all.append(1)
                                 success_rate_by_mode[mode].append(1)
@@ -753,6 +660,9 @@ class DrivingModel(pl.LightningModule):
                                 success_rate_all.append(0)
                                 success_rate_by_mode[mode].append(0)
                                 success_rate_by_allowed[allowed].append(0)
+
+                else:
+                    print(f"Unknown mode: {mode} in sample {i} with path {sample_path}")
                                 
             # save result per sample
             per_sample_results = {
@@ -782,76 +692,16 @@ class DrivingModel(pl.LightningModule):
                 else:
                     ade_fde.update({f"success_rate_{name}_{mode}": 0})
                 
-                # balanced success rate: each mode same amount of samples
-                all_samples_tmp = list(range(len(success_rate_by_mode[mode])))
-                random.shuffle(all_samples_tmp)
-                all_samples_tmp = all_samples_tmp[:min_samples_per_mode]
-                success_rate = sum([success_rate_by_mode[mode][i] for i in all_samples_tmp]) / len(all_samples_tmp)
-                ade_fde.update({f"success_rate_balanced_{name}_{mode}": success_rate})
-                balanced_total_success_rate += success_rate
-                
-            ade_fde.update({f"num_samples_balanced_{name}": min_samples_per_mode})
-            balanced_total_success_rate = balanced_total_success_rate / len(success_rate_by_mode)
-                
-            ade_fde.update({f"success_rate_balanced_total_{name}": balanced_total_success_rate})
-                
-            # Calculate success rate for each allowed
-            for allowed in success_rate_by_allowed:
-                if len(success_rate_by_allowed[allowed]) > 0:
-                    success_rate = sum(success_rate_by_allowed[allowed]) / len(success_rate_by_allowed[allowed])
-                    ade_fde.update({f"success_rate_{name}_allowed_{allowed}": success_rate})
-                else:
-                    ade_fde.update({f"success_rate_{name}_allowed_{allowed}": 0})
-            
             ade_route = np.mean(np.linalg.norm(route_preds_sample - route_gt_sample, axis=-1), axis=-1)
-            ade_route_avg = np.mean(ade_route)
-            fde_route = np.linalg.norm(route_preds_sample[:, -1] - route_gt_sample[:, -1], axis=-1)
-            fde_route_avg = np.mean(fde_route)
-            
-            ade_waypoints = np.mean(np.linalg.norm(waypoints_preds_sample - waypoints_gt_sample, axis=-1), axis=-1)
-            ade_waypoints_avg = np.mean(ade_waypoints)
-            fde_waypoints = np.linalg.norm(waypoints_preds_sample[:, -1] - waypoints_gt_sample[:, -1], axis=-1)
-            fde_waypoints_avg = np.mean(fde_waypoints)
-            
-            ade_waypoints_1d = np.mean(np.linalg.norm(waypoints_preds_1d[samples] - waypoints_gt_1d[samples], axis=-1), axis=-1)
-            ade_waypoints_1d_avg = np.mean(ade_waypoints_1d)
-            fde_waypoints_1d = np.linalg.norm(waypoints_preds_1d[samples][:, -1] - waypoints_gt_1d[samples][:, -1], axis=-1)
-            fde_waypoints_1d_avg = np.mean(fde_waypoints_1d)
             
             ade_fde.update({
-                f"ade_route_{name}": ade_route_avg.item(),
-                f"fde_route_{name}": fde_route_avg.item(),
-                f"ade_waypoints_{name}": ade_waypoints_avg.item(),
-                f"fde_waypoints_{name}": fde_waypoints_avg.item(),
-                f"ade_waypoints_1d_{name}": ade_waypoints_1d_avg.item(),
-                f"fde_waypoints_1d_{name}": fde_waypoints_1d_avg.item(),
                 f"num_samples_{name}": len(ade_route),
             })
 
-        
-        
-        # ade_route = torch.mean(torch.norm(route_preds - route_gt, dim=-1), dim=-1)
-        # ade_route_avg = torch.mean(ade_route)
-        # fde_route = torch.norm(route_preds[:, -1] - route_gt[:, -1], dim=-1)
-        # fde_route_avg = torch.mean(fde_route)
-    
-        # ade_waypoints = torch.mean(torch.norm(waypoints_preds - waypoints_gt, dim=-1), dim=-1)
-        # ade_waypoints_avg = torch.mean(ade_waypoints)
-        # fde_waypoints = torch.norm(waypoints_preds[:, -1] - waypoints_gt[:, -1], dim=-1)
-        # fde_waypoints_avg = torch.mean(fde_waypoints)
-        
-        # # save ade and fde
-        # ade_fde = {
-        #     "ade_route": ade_route_avg.item(),
-        #     "fde_route": fde_route_avg.item(),
-        #     "ade_waypoints": ade_waypoints_avg.item(),
-        #     "fde_waypoints": fde_waypoints_avg.item(),
-        #     "num_samples": len(ade_route),
-        # }
-        save_path_tmp = f"{str(save_prediction_path)}/ade_fde_rank_{self.local_rank}.json"
+        save_path_tmp = f"{str(save_prediction_path)}/dreamer_results_rank_{self.local_rank}.json"
         if os.path.exists(save_path_tmp):
             time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            save_path_tmp = f"{str(save_prediction_path)}/ade_fde_rank_{self.local_rank}_{time}.json"
+            save_path_tmp = f"{str(save_prediction_path)}/dreamer_results_rank_{self.local_rank}_{time}.json"
         with open(save_path_tmp, "w") as f:
             json.dump(ade_fde, f, indent=4)
         
