@@ -573,9 +573,8 @@ class DrivingModel(pl.LightningModule):
                             
                 elif mode == 'slower':
                     paths_by_mode[mode].append(sample_path)
-                    
-                    if name == 'safety':
-                        if name == 'instruction' or name == 'neither':
+
+                    if name == 'instruction' or name == 'neither':
                         # forced instruction following
                         if slope_pred < (-0.05 * current_speed):
                             success_rate_all.append(1)
