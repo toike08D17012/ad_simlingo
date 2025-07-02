@@ -91,7 +91,7 @@ class QADatasetConfig:
 @dataclass
 class InstEvalDatasetConfig:
     # base: DatasetBaseConfig = field(default_factory=DatasetBaseConfig)
-    _target_: str = "simlingo_training.dataloader.dataset_insteval.InstEval_Data_Driving"
+    _target_: str = "simlingo_training.dataloader.dataset_eval_dreamer.Eval_Dreamer"
 
 @dataclass
 class DrivingDataModuleConfig:

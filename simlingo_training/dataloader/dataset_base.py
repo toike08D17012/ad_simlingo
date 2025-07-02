@@ -202,8 +202,10 @@ class BaseDataset(Dataset):  # pylint: disable=locally-disabled, invalid-name
         if dreamer or not self.use_town13:
             # split the data into official training(Town12 and old Towns) and validation set (Town13)
             if self.split == "train":
+                print("Using Town12 for training")
                 route_dirs = [route_dir for route_dir in route_dirs if 'routes_training' in route_dir]
             elif self.split == "val":
+                print("Using Town13 for validation")
                 route_dirs = [route_dir for route_dir in route_dirs if 'routes_validation' in route_dir]
                 route_dirs = route_dirs[:int(0.02 * len(route_dirs))]
         else:

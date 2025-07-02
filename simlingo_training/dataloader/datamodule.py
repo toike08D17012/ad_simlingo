@@ -182,7 +182,7 @@ class DataModule(LightningDataModule):
 
             self.predict_dataset = hydra.utils.instantiate(
                     predict_dataset,
-                    split="train",
+                    split="val",
                     bucket_name="all",
                     **self.cfg,
                     **self.base_dataset,
