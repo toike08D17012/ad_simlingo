@@ -56,8 +56,16 @@ git clone git@github.com:RenzKa/simlingo.git
 cd simlingo
 chmod +x setup_carla.sh
 ./setup_carla.sh
+
+# Create base environment
 conda env create -f environment.yaml
 conda activate simlingo
+
+# Install PyTorch separately to ensure correct CUDA version
+pip install torch==2.2.0
+
+# Install flash-attn separately
+pip install flash-attn==2.7.0.post2
 ```
 
 Before running the code, you will need to add the following paths to PYTHONPATH on your system:
