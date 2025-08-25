@@ -52,21 +52,31 @@ class evaluation_suit():
         answer = self.language["answer"]
         GT = self.language["GT"]
         chunk_size = 500
-        if len(answer) > chunk_size:
-            # split and combine afterwards
-            for i in tqdm(range(0, len(answer), chunk_size)):
-                answer_split = answer[i:i+chunk_size]
-                GT_split = GT[i:i+chunk_size]
-                results_gen = self.language_eval.run_evaluation(answer_split, GT_split)
-                if i == 0:
-                    results_gen_dict = {
-                        f"val/{k}": v for k, v in results_gen.items()
-                    }
-                else:
-                    for k, v in results_gen.items():
-                        results_gen_dict[f"val/{k}"] = (results_gen_dict[f"val/{k}"] + v) / 2.0
-            
+        n_total = len(answer)
 
+        # Fast path: single chunk
+        if n_total <= chunk_size:
+            results = self.language_eval.run_evaluation(answer, GT)
+            return {f"val/{k}": float(v) for k, v in results.items()}
+
+        # Split and combine afterwards (weighted by chunk size)
+        results_accumulator = {}
+        total_items = 0
+
+        for i in range(0, n_total, chunk_size):
+            answer_split = answer[i:i + chunk_size]
+            GT_split = GT[i:i + chunk_size]
+            chunk_len = len(answer_split)
+            total_items += chunk_len
+
+            results_gen = self.language_eval.run_evaluation(answer_split, GT_split)
+
+            # Accumulate weighted sums
+            for k, v in results_gen.items():
+                results_accumulator[k] = results_accumulator.get(k, 0.0) + float(v) * chunk_len
+
+        # Weighted mean over all items
+        results_gen_dict = {f"val/{k}": v_sum / total_items for k, v_sum in results_accumulator.items()}
         return results_gen_dict
 
 
