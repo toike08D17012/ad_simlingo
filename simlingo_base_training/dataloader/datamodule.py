@@ -62,7 +62,7 @@ class DataModule(LightningDataModule):
                     self.llm_tokenizer.pad_token = "[PAD]"
 
             else:
-                self.llm_tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-2-7b-hf", token = "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")
+                self.llm_tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-2-7b-hf", token = "ADD_YOUR_TOKEN")
                 self.llm_tokenizer.add_eos_token = True
                 self.llm_tokenizer.add_bos_token = True
                 if self.llm_tokenizer.pad_token is None:
