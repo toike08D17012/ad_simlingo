@@ -1,0 +1,31 @@
+services:
+  simlingo:
+    image: simlingo
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    shm_size: '32g'
+    network_mode: 'host'
+    ulimits:
+      memlock: -1
+      stack: 67108864
+    tty: true
+    environment:
+      - DISPLAY=$DISPLAY
+      - NVIDIA_DRIVER_CAPABILITIES=all
+    volumes:
+      - ../:/home/kujira/workspace/simlingo
+      - ../software/carla0915:/home/kujira/software/carla0915
+      - /tmp/.x11-unix:/tmp/.x11-unix
+      - $HOME/.Xauthority:/home/kujira/.Xauthority
+      - /usr/share/vulkan/icd.d:/usr/share/vulkan/icd.deploy
+      - .bash_history:/home/kujira/.bash_history
+      - ./triton/:/home/kujira/.triton
+      - ./huggingface_cache:/home/kujira/.cache/huggingface
+    working_dir: /home/kujira/workspace/simlingo
+    command: ["bash"]
+    container_name: simlingo
